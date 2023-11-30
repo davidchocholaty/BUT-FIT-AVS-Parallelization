@@ -48,10 +48,15 @@ unsigned TreeMeshBuilder::treeTraversal(const Vec3_t<float> &pos,
                                  pos.y + halfGridSize * sc_vertexNormPos[i].y,
                                  pos.z + halfGridSize * sc_vertexNormPos[i].z);
 
-            totalTriangles += treeTraversal(newPos, field, halfGridSize);
+            #pragma omp task default(none) firstprivate(newPos, field, halfGridSize) shared(totalTriangles)
+            {
+                #pragma omp atomic update
+                totalTriangles += treeTraversal(newPos, field, halfGridSize);
+            }
         }
     }
 
+    #pragma omp taskwait
     return totalTriangles;
 }
 
@@ -62,8 +67,15 @@ unsigned TreeMeshBuilder::marchCubes(const ParametricScalarField &field)
     // It is also strongly suggested to first implement Octree as sequential
     // code and only when that works add OpenMP tasks to achieve parallelism.
     const float gridSize = static_cast<const float>(mGridSize);
+    unsigned totalTriangles;
 
-    unsigned totalTriangles = treeTraversal(sc_vertexNormPos[0], field, gridSize);
+    #pragma omp parallel default(none) firstprivate(field, gridSize) shared(totalTriangles)
+    {
+        #pragma omp master
+        {
+            totalTriangles = treeTraversal(sc_vertexNormPos[0], field, gridSize);
+        }
+    }
 
     return totalTriangles;
 }
