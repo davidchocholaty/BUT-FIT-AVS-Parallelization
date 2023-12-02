@@ -28,20 +28,29 @@ unsigned LoopMeshBuilder::marchCubes(const ParametricScalarField &field)
     unsigned totalTriangles = 0;
 
     // 2. Loop over each coordinate in the 3D grid.
-    #pragma omp parallel for default(none) reduction(+: totalTriangles) firstprivate(totalCubesCount, field, mGridSize) schedule(guided)
-    for(size_t i = 0; i < totalCubesCount; ++i)
+    //#pragma omp parallel for default(none) reduction(+: totalTriangles) firstprivate(totalCubesCount, field, mGridSize) schedule(guided)
+    #pragma omp parallel
     {
-        // 3. Compute 3D position in the grid.
-        Vec3_t<float> cubeOffset( i % mGridSize,
-                                  (i / mGridSize) % mGridSize,
-                                  i / (mGridSize*mGridSize));
+        #pragma omp for reduction(+: totalTriangles) firstprivate(totalCubesCount, field, mGridSize) schedule(guided) nowait
+        for(size_t i = 0; i < totalCubesCount; ++i)
+        {
+            // 3. Compute 3D position in the grid.
+            Vec3_t<float> cubeOffset( i % mGridSize,
+                                      (i / mGridSize) % mGridSize,
+                                      i / (mGridSize*mGridSize));
 
-        // 4. Evaluate "Marching Cube" at given position in the grid and
-        //    store the number of triangles generated.
-        unsigned numberOfTriangles = buildCube(cubeOffset, field);
+            // 4. Evaluate "Marching Cube" at given position in the grid and
+            //    store the number of triangles generated.
+            unsigned numberOfTriangles = buildCube(cubeOffset, field);
 
-        //#pragma omp atomic
-        totalTriangles += numberOfTriangles;
+            //#pragma omp atomic
+            totalTriangles += numberOfTriangles;
+        }
+
+        #pragma omp critical
+        mTriangles.insert(mTriangles.end(),
+                          mThreadsTriangles[omp_get_thread_num()].begin(),
+                          mThreadsTriangles[omp_get_thread_num()].end());
     }
 
     // 5. Return total number of triangles generated.
@@ -83,6 +92,5 @@ void LoopMeshBuilder::emitTriangle(const BaseMeshBuilder::Triangle_t &triangle)
     // Store generated triangle into vector (array) of generated triangles.
     // The pointer to data in this array is return by "getTrianglesArray(...)" call
     // after "marchCubes(...)" call ends.
-    #pragma omp critical
-    mTriangles.push_back(triangle);
+    mThreadsTriangles[omp_get_thread_num()].push_back(triangle);
 }

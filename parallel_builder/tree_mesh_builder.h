@@ -13,6 +13,9 @@
 
 #include "base_mesh_builder.h"
 
+#include <omp.h>
+#include <unordered_map>
+
 class TreeMeshBuilder : public BaseMeshBuilder
 {
 public:
@@ -30,6 +33,7 @@ protected:
                            const float gridSize);
 
     std::vector<Triangle_t> mTriangles; ///< Temporary array of triangles
+    std::unordered_map<int, std::vector<Triangle_t>> mThreadsTriangles;
 };
 
 #endif // TREE_MESH_BUILDER_H

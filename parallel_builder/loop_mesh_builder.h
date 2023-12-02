@@ -14,6 +14,9 @@
 #include <vector>
 #include "base_mesh_builder.h"
 
+#include <omp.h>
+#include <unordered_map>
+
 class LoopMeshBuilder : public BaseMeshBuilder
 {
 public:
@@ -26,6 +29,7 @@ protected:
     const Triangle_t *getTrianglesArray() const { return mTriangles.data(); }
 
     std::vector<Triangle_t> mTriangles; ///< Temporary array of triangles
+    std::unordered_map<int, std::vector<Triangle_t>> mThreadsTriangles;
 };
 
 #endif // LOOP_MESH_BUILDER_H

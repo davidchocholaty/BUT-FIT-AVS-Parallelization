@@ -39,6 +39,7 @@ unsigned TreeMeshBuilder::treeTraversal(const Vec3_t<float> &pos,
         return 0;
     }
 
+    // TODO jakou hodnotu gridSizeCutoff pouzit
     // Based on the assignment the grid size values are only powers of two. That means, that after some amount of steps the gridSize value has to be one. So, we can test only equality instead of less or equal condition.
     if (gridSize == gridSizeCutoff) {
         totalTriangles += buildCube(pos, field);
@@ -75,6 +76,12 @@ unsigned TreeMeshBuilder::marchCubes(const ParametricScalarField &field)
         {
             totalTriangles = treeTraversal(sc_vertexNormPos[0], field, gridSize);
         }
+
+        // TODO jeslti je potreba bariera
+        #pragma omp critical
+        mTriangles.insert(mTriangles.end(),
+                          mThreadsTriangles[omp_get_thread_num()].begin(),
+                          mThreadsTriangles[omp_get_thread_num()].end());
     }
 
     return totalTriangles;
@@ -115,6 +122,7 @@ void TreeMeshBuilder::emitTriangle(const BaseMeshBuilder::Triangle_t &triangle)
     // Store generated triangle into vector (array) of generated triangles.
     // The pointer to data in this array is return by "getTrianglesArray(...)" call
     // after "marchCubes(...)" call ends.
-    #pragma omp critical
-    mTriangles.push_back(triangle);
+    // #pragma omp critical
+    // mTriangles.push_back(triangle);
+    mThreadsTriangles[omp_get_thread_num()].push_back(triangle);
 }
