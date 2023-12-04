@@ -1,0 +1,107 @@
+Architektury Výpočetních Systémů (AVS 2023)
+Projekt č. 2 (PMC)
+Login: xchoch09
+
+Úloha 1: Paralelizace původního řešení
+===============================================================================
+
+1) Kterou ze smyček (viz zadání) je vhodnější paralelizovat a co způsobuje 
+   neefektivitu paralelizaci té druhé?
+
+   Vhodnější je paralelizovat vnější smyčku, tedy smyčku v metodě marchCubes().
+   Neefektivita paralelizace vnitřní smyčky (v metodě evaluateFieldAt()) je
+   způsobena tím, že je paralelizována pouze malá část kódu. Zároveň je
+   vyžadována velká režie paralelizace a stále významná část kódu je
+   zpracovávána sekvenčně.
+
+2) Jaké plánování (rozdělení práce mezi vlákna) jste zvolili a proč? 
+   Jaký vliv má velikost "chunk" při dynamickém plánování (8, 16, 32, 64)?
+
+   Z výsledků testování jednotlivých variant plánování bylo zvoleno plánování
+   "guided", které se v průměru ukázalo jako nejrychlejší s nejlepší
+   efektivitou využití CPU.
+
+   Velikost "chunk" má při dynamickém plánování vliv takový, že čím větší je
+   tato hodnota, tím hůře se vyvažuje práce mezi všechna vlákna. Naopak čím
+   menší je daná hodnota, tím více je vybalancovaný systém, ale naopak je
+   vyšší režie při rozdělování iterací. Na základě měření nebyl pozorován
+   významný rozdíl, mezi jednotlivými nastaveními velikosti "chunk". Ovšem lze
+   prohlásit, že pro menší hodnoty s větší četností docházelo k pomalejším
+   běhům a horší efektivitě využití CPU. Dané změny chování pro totožnou
+   velikost "chunk" jsou především způsobeny tím, jak moc je běh programu
+   bržděn režií při rozdělování iterací.
+
+3) Jakým způsobem zajišťujete ukládání trojúhelníků z několika vláken současně?
+
+   Jako datová struktura pro ukládání trojúhelníků byl zvolen vektor ze
+   standardní knihovny jazyka C++ (std::vector) stejně jako je tomu v
+   referenční implementaci. Nyní ovšem je nutné použít pragmu z knihovny
+   OpenMP, a to pragmu "critical", tudíž ukládání trojúhelníků je prováděno v
+   rámci tzv. kritické sekce. Tato pragma je důležitá z toho důvodu, že
+   jednotlivá vlákna přidávají trojúhelníky na konec vektoru, přičemž díky
+   jejímu použití je zařízeno, že trojúhelník může ukládat pouze jedno vlákno
+   (ostatní čekají, pokud se nacházejí přímo před kritickou sekcí), přičemž
+   nezáleží na pořadí vkládání jednotlivých trojúhelníků.
+
+
+Úloha 2: Paralelní průchod stromem
+===============================================================================
+
+1) Stručně popište použití OpenMP tasků ve vašem řešení.
+
+   Nejprve je ve funkci marchCubes() vytvořena paralelní sekce, ve které
+   hlavní vlákno provede volání rekurzivní funkce treeTraversal(). V této
+   funkci jsou vytvářeny tasky pro rekurzivní volání téže funkce pro 8
+   podstromů.
+
+2) Jaký vliv má na vaše řešení tzv. "cut-off"? Je vhodné vytvářet nový 
+   task pro každou krychli na nejnižší úrovni?
+
+   Tzv. "cut-off" určuje minimální délku hrany, od které již nejsou vytvářeny
+   tasky pro další větvení stromu, ale namísto toho je již zavolána metoda
+   buildCube() pro generování polygonů. Tím tato hodnota zároveň určuje úroveň
+   listů stromu. V rámci implementace byla zvolena délka hrany 1. Pokud je
+   délka hrany menší nebo rovna 1, dochází ke generování polygonů. Jelikož dle
+   zadání je předpokládáno, že velikost mřížky je v mocninách 2, při dělení
+   dané hodnoty hodnotou 2 (na poloviny) postupně musí délka hrany být přesně
+   1, a tudíž lze porovnávat délku hrany pouze pomocí rovnosti.
+
+   Na základě měření není vhodné vytvářet task pro každou krychli na nejnižší
+   úrovni.
+
+3) Jakým způsobem zajišťujete ukládání trojúhelníků z několika vláken současně?
+
+   Ukládání trojuhelníků je implementováno totožně jako pro paralerní verzi
+   původního řešení (std::vector a #pragma omp critical).
+
+Úloha 3: Grafy škálování všech řešení
+===============================================================================
+
+1) Stručně zhodnoťte efektivitu vytvořených řešení (na základě grafů ŠKÁLOVÁNÍ).
+
+2) V jakém případě (v závislosti na počtu bodů ve vstupním souboru a velikosti 
+   mřížky) bude vaše řešení 1. úlohy neefektivní? (pokud takový případ existuje)
+
+3) Je (nebo není) stromový algoritmus efektivnější z pohledu slabého škálování 
+   vzhledem ke vstupu?
+
+4) Jaký je rozdíl mezi silným a slabým škálováním?
+
+Úloha 4: Analýza využití jader pomocí VTune
+================================================================================
+
+1) Jaké bylo průměrné využití jader pro všechny tři implementace s omezením na 
+   18 vláken? Na kolik procent byly využity?
+   
+   ref:
+   loop:
+   tree:
+
+2) Jaké bylo průměrné využití jader pro všechny tři implementace s využitím 
+   všech jader? Na kolik procent se podařilo využít obě CPU?
+   
+   ref:
+   loop:
+   tree:
+
+3) Jaké jsou závěry z těchto měření?
