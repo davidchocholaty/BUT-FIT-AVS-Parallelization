@@ -79,13 +79,43 @@ Login: xchoch09
 
 1) Stručně zhodnoťte efektivitu vytvořených řešení (na základě grafů ŠKÁLOVÁNÍ).
 
+   Obě varianty implementace disponují vhodným silným škálováním do počtu 16
+   vláken. Od více jak 32 vláken včetně efektivita obou implementačních variant
+   značně klesá. Tudíž pro obě varianty implementace platí, že při zvýšení
+   počtu vláken dochází ke zkrácení času výpočtu až do počtu 16 vláken.
+
+   Varianta implementace "loop" je s rostoucím počtem vláken efektivnější než
+   varianta "tree", ovšem čas běhu je delší. Pro variantu "tree" zároveň platí,
+   že při velmi malých vstupech (10) nedochází ke snížení času výpočtu při
+   vyšším počtu vláken, tudíž je při takových vstupech málo efektivní.
+
 2) V jakém případě (v závislosti na počtu bodů ve vstupním souboru a velikosti 
    mřížky) bude vaše řešení 1. úlohy neefektivní? (pokud takový případ existuje)
+
+   Vlastní řešení 1. úlohy bude neefektivní při velmi malém vstupu a velkém
+   počtu výpočetních vláken.
 
 3) Je (nebo není) stromový algoritmus efektivnější z pohledu slabého škálování 
    vzhledem ke vstupu?
 
+   Ano je efektivnější oproti variantě "loop", ovšem pouze do určitého počtu
+   vláken (cca 16 včetně - 2^4). Na základě grafů lze předpokládat, že při
+   větším počtu jader, než bylo testováno, bude mít implementace "loop" lepší
+   škálování.
+
 4) Jaký je rozdíl mezi silným a slabým škálováním?
+   Silné škálování ponechává konstantní celkovou práci a je měněna míra
+   paralelizace (počet vláken). Vychází z Amdahlova zákona. Dané škálování tedy
+   zobrazuje změny doby výpočtu v závislosti na počtu vláken při totožné
+   velikosti vstupu. Ideální křivka je taková křivka, která postupně klesá (s
+   větším počtem vláken je doba potřebná pro provedení výpočtu kratší).
+
+   Naopak při slabém škálování je ideálně uvažován konstantní čas výpočtu na
+   vlákno, přičemž je zobrazována doba výpočtu v závislosti na velikosti vstupu
+   pro každé vlákno. Vychází z Gustafsonova zákona. Ideální křivka je taková
+   křivka, která je konstantní (rovnoběžná s osou označující počet vláken),
+   tudíž při vyšším počtu vláken a při současně větší velikosti vstupu, přičemž
+   obě se mění lineárně, je doba výpočtu stejná.
 
 Úloha 4: Analýza využití jader pomocí VTune
 ================================================================================
@@ -93,15 +123,18 @@ Login: xchoch09
 1) Jaké bylo průměrné využití jader pro všechny tři implementace s omezením na 
    18 vláken? Na kolik procent byly využity?
    
-   ref:
+   ref: 2.8% (0.998 out of 36 logical CPUs)
    loop:
    tree:
 
 2) Jaké bylo průměrné využití jader pro všechny tři implementace s využitím 
    všech jader? Na kolik procent se podařilo využít obě CPU?
    
-   ref:
+   ref: 2.8% (0.998 out of 36 logical CPUs)
    loop:
    tree:
 
 3) Jaké jsou závěry z těchto měření?
+   Obě implementační varianty, jak "loop", tak i "tree", jsou efektivnější než
+   referenční řešení. Dále varianta "loop" dokáže vytížit více vláken oproti
+   variantě "tree", tudíž bude efektivnější při velkém počtu vláken.
