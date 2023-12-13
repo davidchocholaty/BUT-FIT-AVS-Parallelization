@@ -15,7 +15,7 @@
 #include "tree_mesh_builder.h"
 
 constexpr float sqrt3Div2 = 0.86602540378f;
-constexpr float gridSizeCutoff = 1.0f;
+constexpr float gridSizeCutoff = 4.0f;
 
 TreeMeshBuilder::TreeMeshBuilder(unsigned gridEdgeSize)
     : BaseMeshBuilder(gridEdgeSize, "Octree")
@@ -39,11 +39,25 @@ unsigned TreeMeshBuilder::treeTraversal(const Vec3_t<float> &pos,
         return 0;
     }
 
-    // Based on the assignment the grid size values are only powers of two. That means, that after some amount of steps the gridSize value has to be one. So, we can test only equality instead of less or equal condition.
-    if (gridSize == gridSizeCutoff) {
-        totalTriangles += buildCube(pos, field);
+    if (gridSize <= gridSizeCutoff) {
+        const size_t currentGridSize = static_cast<const size_t>(gridSize);
+        const size_t cubesCount =  currentGridSize * currentGridSize * currentGridSize;
+
+        for(size_t i = 0; i < cubesCount; ++i) {
+            // 3. Compute 3D position in the grid.
+            Vec3_t<float> cubeOffset(pos.x + i % currentGridSize,
+                                     pos.y + (i / currentGridSize) % currentGridSize,
+                                     pos.z + i / (currentGridSize * currentGridSize));
+
+            // 4. Evaluate "Marching Cube" at given position in the grid and
+            //    store the number of triangles generated.
+            unsigned numberOfTriangles = buildCube(cubeOffset, field);
+
+            totalTriangles += numberOfTriangles;
+        }
     } else {
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 8; i++)
+        {
             Vec3_t<float> newPos(pos.x + halfGridSize * sc_vertexNormPos[i].x,
                                  pos.y + halfGridSize * sc_vertexNormPos[i].y,
                                  pos.z + halfGridSize * sc_vertexNormPos[i].z);
