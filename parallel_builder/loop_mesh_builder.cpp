@@ -34,13 +34,12 @@ unsigned LoopMeshBuilder::marchCubes(const ParametricScalarField &field)
         // 3. Compute 3D position in the grid.
         Vec3_t<float> cubeOffset( i % mGridSize,
                                   (i / mGridSize) % mGridSize,
-                                  i / (mGridSize*mGridSize));
+                                  i / (mGridSize * mGridSize));
 
         // 4. Evaluate "Marching Cube" at given position in the grid and
         //    store the number of triangles generated.
         unsigned numberOfTriangles = buildCube(cubeOffset, field);
 
-        //#pragma omp atomic
         totalTriangles += numberOfTriangles;
     }
 
